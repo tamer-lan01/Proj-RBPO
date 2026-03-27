@@ -1,0 +1,2 @@
+{"sessionId":"a0eb27","runId":"pre-fix","hypothesisId":"A","location":"OwnerController.java:create","message":"POST /api/owners received","data":{"namePresent":true,"lastNamePresent":true},"timestamp":1774619312249}
+{"sessionId":"a0eb27","runId":"pre-fix","hypothesisId":"C","location":"OwnerController.java:create","message":"Owner created","data":{"resolvedLastName":"Ivanov","id":1},"timestamp":1774619312250}

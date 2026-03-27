@@ -1,0 +1,394 @@
+{
+  "info": {
+    "name": "RBPO VetClinic CRUD",
+    "description": "Simple Postman collection for Spring Boot VetClinic (owners, pets, vets, appointments, treatments).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "ownerId", "value": "1" },
+    { "key": "petId", "value": "1" },
+    { "key": "vetId", "value": "1" },
+    { "key": "appointmentId", "value": "1" },
+    { "key": "treatmentId", "value": "1" },
+    { "key": "appointmentDateTime", "value": "2000-01-01T10:00:00" },
+    { "key": "appointmentDateTimeUpdated", "value": "2000-01-01T11:00:00" }
+  ],
+  "item": [
+    {
+      "name": "Owners",
+      "item": [
+        {
+          "name": "Create owner",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/owners",
+              "path": ["api", "owners"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ivan\",\n  \"lastName\": \"Ivanov\",\n  \"phone\": \"123456\",\n  \"email\": \"ivan@example.com\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('ownerId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get owner by id",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/{{ownerId}}",
+              "path": ["api", "owners", "{{ownerId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update owner",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/{{ownerId}}",
+              "path": ["api", "owners", "{{ownerId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"IvanUpdated\",\n  \"lastName\": \"IvanovUpdated\",\n  \"phone\": \"654321\",\n  \"email\": \"ivan.updated@example.com\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete owner",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/{{ownerId}}",
+              "path": ["api", "owners", "{{ownerId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pets",
+      "item": [
+        {
+          "name": "Create pet",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pets",
+              "path": ["api", "pets"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Doggie\",\n  \"species\": \"Dog\",\n  \"breed\": \"Labrador\",\n  \"ownerId\": {{ownerId}}\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('petId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get pet by id",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/pets/{{petId}}",
+              "path": ["api", "pets", "{{petId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update pet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pets/{{petId}}",
+              "path": ["api", "pets", "{{petId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"DoggieUpdated\",\n  \"species\": \"Dog\",\n  \"breed\": \"Husky\",\n  \"ownerId\": {{ownerId}}\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete pet",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/pets/{{petId}}",
+              "path": ["api", "pets", "{{petId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Vets",
+      "item": [
+        {
+          "name": "Create vet",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets",
+              "path": ["api", "vets"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. Smith\",\n  \"specialization\": \"Therapy\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('vetId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get vet by id",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}",
+              "path": ["api", "vets", "{{vetId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update vet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}",
+              "path": ["api", "vets", "{{vetId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. Smith Updated\",\n  \"specialization\": \"Surgery\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete vet",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}",
+              "path": ["api", "vets", "{{vetId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "Create appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments",
+              "path": ["api", "appointments"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": {{petId}},\n  \"vetId\": {{vetId}},\n  \"dateTime\": \"{{appointmentDateTime}}\",\n  \"reason\": \"Checkup\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('appointmentId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get appointment by id",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+              "path": ["api", "appointments", "{{appointmentId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update appointment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+              "path": ["api", "appointments", "{{appointmentId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": {{petId}},\n  \"vetId\": {{vetId}},\n  \"dateTime\": \"{{appointmentDateTimeUpdated}}\",\n  \"reason\": \"Rescheduled / updated\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete appointment",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+              "path": ["api", "appointments", "{{appointmentId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Treatments",
+      "item": [
+        {
+          "name": "Create treatment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/treatments",
+              "path": ["api", "treatments"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appointmentId\": {{appointmentId}},\n  \"proceduresAndMedications\": \"Vitamin injection\",\n  \"notes\": \"Treated\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('treatmentId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get treatment by id",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/treatments/{{treatmentId}}",
+              "path": ["api", "treatments", "{{treatmentId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update treatment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/treatments/{{treatmentId}}",
+              "path": ["api", "treatments", "{{treatmentId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proceduresAndMedications\": \"Updated medicine\",\n  \"notes\": \"Updated notes\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete treatment",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/treatments/{{treatmentId}}",
+              "path": ["api", "treatments", "{{treatmentId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
