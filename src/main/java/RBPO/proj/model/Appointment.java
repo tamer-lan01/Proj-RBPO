@@ -1,13 +1,34 @@
 package RBPO.proj.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "appointments")
 public class Appointment {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "pet_id", nullable = false)
     private Long petId;
+
+    @Column(name = "vet_id", nullable = false)
     private Long vetId;
+
+    @Column(name = "date_time", nullable = false)
     private LocalDateTime dateTime;
+
     private String reason;
+
+    @Column(nullable = false)
+    private boolean completed;
 
     public Appointment() {
     }
@@ -18,6 +39,7 @@ public class Appointment {
         this.vetId = vetId;
         this.dateTime = dateTime;
         this.reason = reason;
+        this.completed = false;
     }
 
     public Long getId() {
@@ -58,5 +80,13 @@ public class Appointment {
 
     public void setReason(String reason) {
         this.reason = reason;
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
     }
 }

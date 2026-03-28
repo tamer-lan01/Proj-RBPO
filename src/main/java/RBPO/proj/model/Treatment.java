@@ -1,9 +1,25 @@
 package RBPO.proj.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "treatments")
 public class Treatment {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "appointment_id", nullable = false, unique = true)
     private Long appointmentId;
+
+    @Column(name = "procedures_and_medications")
     private String proceduresAndMedications;
+
     private String notes;
 
     public Treatment() {

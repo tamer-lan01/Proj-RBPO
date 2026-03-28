@@ -1,6 +1,5 @@
 package RBPO.proj.controller;
 
-import RBPO.proj.debug.DebugLog;
 import RBPO.proj.dto.PetInfo;
 import RBPO.proj.model.Appointment;
 import RBPO.proj.model.Pet;
@@ -11,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/pets")
@@ -28,48 +26,10 @@ public class PetController {
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Pet pet) {
         try {
-            // #region agent log
-            DebugLog.log(
-                    "pre-fix",
-                    "B",
-                    "PetController.java:create",
-                    "POST /api/pets received",
-                    Map.of(
-                            "petNamePresent", pet != null && pet.getName() != null,
-                            "ownerId", pet != null ? pet.getOwnerId() : null
-                    )
-            );
-            // #endregion
-
             Pet created = petService.create(pet);
             PetInfo info = petService.toPetInfo(created);
-
-            // #region agent log
-            DebugLog.log(
-                    "pre-fix",
-                    "B",
-                    "PetController.java:create",
-                    "Pet created response",
-                    Map.of(
-                            "petId", info.getId(),
-                            "petName", info.getName(),
-                            "ownerLastName", info.getOwnerLastName()
-                    )
-            );
-            // #endregion
-
             return ResponseEntity.status(HttpStatus.CREATED).body(info);
         } catch (IllegalArgumentException e) {
-            // #region agent log
-            DebugLog.log(
-                    "pre-fix",
-                    "B",
-                    "PetController.java:create",
-                    "POST /api/pets validation error",
-                    Map.of("error", e.getMessage())
-            );
-            // #endregion
-
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
