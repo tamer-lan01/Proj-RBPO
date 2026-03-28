@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "RBPO VetClinic CRUD",
-    "description": "Simple Postman collection for Spring Boot VetClinic (owners, pets, vets, appointments, treatments).",
+    "name": "RBPO VetClinic — лаба 3 (CRUD + операции)",
+    "description": "## Перед запуском\n1. PostgreSQL, база из `application.properties` (часто `proj`).\n2. Переменные окружения: `DB_USER`, `DB_PASS`.\n3. Запустить приложение (`ProjApplication`). После старта выполняется `data.sql` — id сущностей обычно **1, 2, …**.\n\n## Импорт\nFile → Import → выбрать этот файл. Переменная **baseUrl** = `http://localhost:8080` (или свой порт).\n\n## Как показать лабу\n1. **pgAdmin**: ERD диаграмма связей (см. README проекта или подсказку преподавателя).\n2. **Папка «Lists»** — быстро показать, что данные из БД отдаются API.\n3. **Папки CRUD** — полный цикл по сущностям.\n4. **Operations (assignment 3)** — 5 бизнес-операций.\n\n## Важно по порядку\n- **Create owner** подставляет уникальный `email` через `{{$timestamp}}`, чтобы не ловить UNIQUE при повторных запусках.\n- **2 Complete visit** рассчитан на визит **без назначения** — в `data.sql` это обычно id **2** (`appointmentIdWithoutTreatment`). Если вы уже выполнили эту операцию, перезапустите приложение или укажите другой id вручную.\n- **5 Cancel appointment** удаляет визит — выполняйте в конце или задайте `appointmentId` на тестовый визит.\n- **1 Admit** использует свободный слот `2000-06-01T09:00:00` для `vetId` из переменной.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -12,9 +12,72 @@
     { "key": "appointmentId", "value": "1" },
     { "key": "treatmentId", "value": "1" },
     { "key": "appointmentDateTime", "value": "2000-01-01T10:00:00" },
-    { "key": "appointmentDateTimeUpdated", "value": "2000-01-01T11:00:00" }
+    { "key": "appointmentDateTimeUpdated", "value": "2000-01-01T11:00:00" },
+    { "key": "appointmentIdWithoutTreatment", "value": "2" },
+    { "key": "scheduleFrom", "value": "1999-12-31T00:00:00" },
+    { "key": "scheduleTo", "value": "2005-12-31T23:59:59" }
   ],
   "item": [
+    {
+      "name": "Lists (все записи из БД)",
+      "item": [
+        {
+          "name": "Get all owners",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/owners",
+              "path": ["api", "owners"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get all pets (PetInfo)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/pets",
+              "path": ["api", "pets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get all vets",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/vets",
+              "path": ["api", "vets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get all appointments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments",
+              "path": ["api", "appointments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get all treatments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/treatments",
+              "path": ["api", "treatments"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
     {
       "name": "Owners",
       "item": [
@@ -31,7 +94,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Ivan\",\n  \"lastName\": \"Ivanov\",\n  \"phone\": \"123456\",\n  \"email\": \"ivan@example.com\"\n}"
+              "raw": "{\n  \"name\": \"Ivan\",\n  \"lastName\": \"Ivanov\",\n  \"phone\": \"123456\",\n  \"email\": \"owner{{$timestamp}}@lab.local\"\n}"
             }
           },
           "response": [],
@@ -41,8 +104,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "var json = pm.response.json();",
-                  "pm.collectionVariables.set('ownerId', json.id);"
+                  "if (pm.response.code === 201) {",
+                  "  var json = pm.response.json();",
+                  "  pm.collectionVariables.set('ownerId', json.id);",
+                  "}"
                 ]
               }
             }
@@ -60,6 +125,17 @@
           "response": []
         },
         {
+          "name": "Get pets of owner",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/{{ownerId}}/pets",
+              "path": ["api", "owners", "{{ownerId}}", "pets"]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Update owner",
           "request": {
             "method": "PUT",
@@ -72,7 +148,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"IvanUpdated\",\n  \"lastName\": \"IvanovUpdated\",\n  \"phone\": \"654321\",\n  \"email\": \"ivan.updated@example.com\"\n}"
+              "raw": "{\n  \"name\": \"IvanUpdated\",\n  \"lastName\": \"IvanovUpdated\",\n  \"phone\": \"654321\",\n  \"email\": \"ivan.updated{{$timestamp}}@lab.local\"\n}"
             }
           },
           "response": []
@@ -116,8 +192,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "var json = pm.response.json();",
-                  "pm.collectionVariables.set('petId', json.id);"
+                  "if (pm.response.code === 201) {",
+                  "  var json = pm.response.json();",
+                  "  pm.collectionVariables.set('petId', json.id);",
+                  "}"
                 ]
               }
             }
@@ -130,6 +208,17 @@
             "url": {
               "raw": "{{baseUrl}}/api/pets/{{petId}}",
               "path": ["api", "pets", "{{petId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get appointments for pet",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/pets/{{petId}}/appointments",
+              "path": ["api", "pets", "{{petId}}", "appointments"]
             }
           },
           "response": []
@@ -191,8 +280,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "var json = pm.response.json();",
-                  "pm.collectionVariables.set('vetId', json.id);"
+                  "if (pm.response.code === 201) {",
+                  "  var json = pm.response.json();",
+                  "  pm.collectionVariables.set('vetId', json.id);",
+                  "}"
                 ]
               }
             }
@@ -205,6 +296,17 @@
             "url": {
               "raw": "{{baseUrl}}/api/vets/{{vetId}}",
               "path": ["api", "vets", "{{vetId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get appointments for vet",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}/appointments",
+              "path": ["api", "vets", "{{vetId}}", "appointments"]
             }
           },
           "response": []
@@ -266,8 +368,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "var json = pm.response.json();",
-                  "pm.collectionVariables.set('appointmentId', json.id);"
+                  "if (pm.response.code === 201) {",
+                  "  var json = pm.response.json();",
+                  "  pm.collectionVariables.set('appointmentId', json.id);",
+                  "}"
                 ]
               }
             }
@@ -280,6 +384,17 @@
             "url": {
               "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
               "path": ["api", "appointments", "{{appointmentId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get treatments for appointment",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}/treatments",
+              "path": ["api", "appointments", "{{appointmentId}}", "treatments"]
             }
           },
           "response": []
@@ -341,8 +456,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "var json = pm.response.json();",
-                  "pm.collectionVariables.set('treatmentId', json.id);"
+                  "if (pm.response.code === 201) {",
+                  "  var json = pm.response.json();",
+                  "  pm.collectionVariables.set('treatmentId', json.id);",
+                  "}"
                 ]
               }
             }
@@ -384,6 +501,91 @@
             "url": {
               "raw": "{{baseUrl}}/api/treatments/{{treatmentId}}",
               "path": ["api", "treatments", "{{treatmentId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Operations (assignment 3)",
+      "item": [
+        {
+          "name": "1 Admit pet with appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/operations/admit-pet-with-appointment",
+              "path": ["api", "operations", "admit-pet-with-appointment"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ownerId\": {{ownerId}},\n  \"petName\": \"Buddy\",\n  \"species\": \"Dog\",\n  \"breed\": \"Beagle\",\n  \"vetId\": {{vetId}},\n  \"dateTime\": \"2000-06-01T09:00:00\",\n  \"reason\": \"First visit\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2 Complete visit with treatment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/operations/complete-visit-with-treatment",
+              "path": ["api", "operations", "complete-visit-with-treatment"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appointmentId\": {{appointmentIdWithoutTreatment}},\n  \"proceduresAndMedications\": \"Vaccination\",\n  \"notes\": \"Done in one transaction\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3 Owner summary (owner + pets)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/operations/owners/{{ownerId}}/summary",
+              "path": ["api", "operations", "owners", "{{ownerId}}", "summary"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4 Vet schedule (vet + appointments + pet names)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/operations/vets/{{vetId}}/schedule?from={{scheduleFrom}}&to={{scheduleTo}}",
+              "path": ["api", "operations", "vets", "{{vetId}}", "schedule"],
+              "query": [
+                { "key": "from", "value": "{{scheduleFrom}}" },
+                { "key": "to", "value": "{{scheduleTo}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5 Cancel appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/operations/cancel-appointment",
+              "path": ["api", "operations", "cancel-appointment"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appointmentId\": {{appointmentId}}\n}"
             }
           },
           "response": []
