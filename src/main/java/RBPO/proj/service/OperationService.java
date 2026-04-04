@@ -17,7 +17,7 @@ import RBPO.proj.repository.VetRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,7 +70,7 @@ public class OperationService {
         Appointment toCreate = new Appointment();
         toCreate.setPetId(pet.getId());
         toCreate.setVetId(request.getVetId());
-        toCreate.setDateTime(request.getDateTime());
+        toCreate.setVisitDate(request.getVisitDate());
         toCreate.setReason(request.getReason());
         Appointment appointment = appointmentService.create(toCreate);
 
@@ -93,9 +93,9 @@ public class OperationService {
             throw new IllegalArgumentException("Appointment with id " + request.getAppointmentId() + " already has a treatment");
         }
 
-        LocalDateTime now = LocalDateTime.now();
-        if (appointment.getDateTime() != null && appointment.getDateTime().isAfter(now)) {
-            throw new IllegalArgumentException("Treatment can be created only after the appointment time");
+        LocalDate today = LocalDate.now();
+        if (appointment.getVisitDate() != null && appointment.getVisitDate().isAfter(today)) {
+            throw new IllegalArgumentException("Treatment can be created only on or after the appointment day");
         }
 
         Treatment treatment = new Treatment();
@@ -137,24 +137,24 @@ public class OperationService {
      * Бизнес-операция: расписание врача с именами питомцев (Vet + Appointment + Pet).
      */
     @Transactional(readOnly = true)
-    public List<VetScheduleRow> getVetSchedule(Long vetId, LocalDateTime from, LocalDateTime to) {
+    public List<VetScheduleRow> getVetSchedule(Long vetId, LocalDate from, LocalDate to) {
         if (!vetRepository.existsById(vetId)) {
             throw new IllegalArgumentException("Vet with id " + vetId + " not found");
         }
         if (from == null || to == null) {
-            throw new IllegalArgumentException("from and to query parameters are required (ISO-8601 date-time)");
+            throw new IllegalArgumentException("from and to are required (yyyy-MM-dd)");
         }
-        if (!to.isAfter(from)) {
-            throw new IllegalArgumentException("to must be after from");
+        if (to.isBefore(from)) {
+            throw new IllegalArgumentException("to must not be before from");
         }
 
-        List<Appointment> appointments = appointmentRepository.findByVetIdAndDateTimeBetweenOrderByDateTimeAsc(vetId, from, to);
+        List<Appointment> appointments = appointmentRepository.findByVetIdAndVisitDateBetweenOrderByVisitDateAsc(vetId, from, to);
         List<VetScheduleRow> rows = new ArrayList<>();
         for (Appointment a : appointments) {
             String petName = petRepository.findById(a.getPetId())
                     .map(Pet::getName)
                     .orElse("?");
-            rows.add(new VetScheduleRow(a.getId(), a.getDateTime(), a.getPetId(), petName, a.getReason(), a.isCompleted()));
+            rows.add(new VetScheduleRow(a.getId(), a.getVisitDate(), a.getPetId(), petName, a.getReason(), a.isCompleted()));
         }
         return rows;
     }

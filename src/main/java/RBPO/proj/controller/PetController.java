@@ -7,6 +7,7 @@ import RBPO.proj.service.AppointmentService;
 import RBPO.proj.service.PetService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class PetController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<?> create(@RequestBody Pet pet) {
         try {
             Pet created = petService.create(pet);
@@ -36,6 +38,7 @@ public class PetController {
 
     /** GET: все визиты конкретного питомца */
     @GetMapping("/{petId}/appointments")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Appointment>> getAppointmentsForPet(@PathVariable Long petId) {
         if (!petService.exists(petId)) {
             return ResponseEntity.notFound().build();
@@ -44,6 +47,7 @@ public class PetController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PetInfo> getById(@PathVariable Long id) {
         return petService.getById(id)
                 .map(petService::toPetInfo)
@@ -52,6 +56,7 @@ public class PetController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public List<PetInfo> getAll(@RequestParam(required = false) Long ownerId) {
         if (ownerId != null) {
             return petService.getPetInfosByOwnerId(ownerId);
@@ -60,6 +65,7 @@ public class PetController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Pet pet) {
         try {
             return petService.update(id, pet)
@@ -72,6 +78,7 @@ public class PetController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (!petService.delete(id)) {
             return ResponseEntity.notFound().build();

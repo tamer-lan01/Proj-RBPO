@@ -1,23 +1,334 @@
 {
   "info": {
-    "name": "RBPO VetClinic — лаба 3 (CRUD + операции)",
-    "description": "## Перед запуском\n1. PostgreSQL, база из `application.properties` (часто `proj`).\n2. Переменные окружения: `DB_USER`, `DB_PASS`.\n3. Запустить приложение (`ProjApplication`). После старта выполняется `data.sql` — id сущностей обычно **1, 2, …**.\n\n## Импорт\nFile → Import → выбрать этот файл. Переменная **baseUrl** = `http://localhost:8080` (или свой порт).\n\n## Как показать лабу\n1. **pgAdmin**: ERD диаграмма связей (см. README проекта или подсказку преподавателя).\n2. **Папка «Lists»** — быстро показать, что данные из БД отдаются API.\n3. **Папки CRUD** — полный цикл по сущностям.\n4. **Operations (assignment 3)** — 5 бизнес-операций.\n\n## Важно по порядку\n- **Create owner** подставляет уникальный `email` через `{{$timestamp}}`, чтобы не ловить UNIQUE при повторных запусках.\n- **2 Complete visit** рассчитан на визит **без назначения** — в `data.sql` это обычно id **2** (`appointmentIdWithoutTreatment`). Если вы уже выполнили эту операцию, перезапустите приложение или укажите другой id вручную.\n- **5 Cancel appointment** удаляет визит — выполняйте в конце или задайте `appointmentId` на тестовый визит.\n- **1 Admit** использует свободный слот `2000-06-01T09:00:00` для `vetId` из переменной.",
+    "name": "RBPO VetClinic — лабы 3–4 (CRUD + операции + Security)",
+    "description": "## Перед запуском\n1. PostgreSQL, база из `application.properties` (часто `proj`).\n2. Переменные окружения: `DB_USER`, `DB_PASS`.\n3. Запустить приложение (`ProjApplication`). После старта выполняется `data.sql` — id сущностей обычно **1, 2, …**.\n\n## Лаба 4 (Security)\n**Важно:** на сервере нет «сессии переключения». Роль = кто залогинен через **HTTP Basic** (логин/пароль). Один и тот же URL с разными учётками даёт разный доступ.\n1. **Register ADMIN** / **Register USER** — разные эндпоинты; секрет админа в заголовке `X-Admin-Register-Secret` = `{{adminRegisterSecret}}`.\n2. **Get CSRF token** — перед POST/PUT/DELETE (кроме register).\n3. **Переключить коллекцию на ADMIN/USER** — в **Pre-request** сразу копирует `adminEmail`/`userEmail` в `basicUser`/`basicPassword` для всех запросов ниже (коллекция).\n4. Папка **«Лаба 4 — проверка ролей»** — запросы с **своим** Basic (`adminEmail` или `userEmail`); удобно показать преподавателю без Switch.\n5. **USER** по API может только **POST /api/pets**; остальное — **403**. **ADMIN** — всё.\n6. Секрет админа в проде: env `APP_ADMIN_REGISTER_SECRET`.\n\n## Импорт\nFile → Import → выбрать этот файл. Во всех запросах уже указан адрес `http://localhost:8080` (при другом порте замени хост в URL).\n\n## Как показать лабу\n1. **pgAdmin**: ERD диаграмма связей (см. README проекта или подсказку преподавателя).\n2. **Папка «Lists»** — быстро показать, что данные из БД отдаются API.\n3. **Папки CRUD** — полный цикл по сущностям.\n4. **Operations** — ровно **5** бизнес-операций из задания (по порядку: 1→5).\n\n## Важно\n- **Приёмы (Appointment)** — поле **visitDate** (`yyyy-MM-dd`); для совместимости принимается и старое имя **dateTime**.\n- **Admit pet** — в теле указаны `ownerId: 1` и `vetId: 1` (как после `data.sql`); перезапусти приложение после обновления кода.\n- **Create owner** — `email` с `{{$timestamp}}`.\n- **Завершение визита** — переменная `appointmentIdWithoutTreatment` (часто **2** после seed); иначе смотри **Lists → Get all appointments**.\n- **Отмена** — `appointmentId`; визит исчезает из БД.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      { "key": "username", "value": "{{basicUser}}", "type": "string" },
+      { "key": "password", "value": "{{basicPassword}}", "type": "string" }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const profile = pm.collectionVariables.get('activeProfile') || 'admin';",
+          "if (profile === 'user') {",
+          "  pm.collectionVariables.set('basicUser', pm.collectionVariables.get('userEmail') || '');",
+          "  pm.collectionVariables.set('basicPassword', pm.collectionVariables.get('userPassword') || '');",
+          "} else {",
+          "  pm.collectionVariables.set('basicUser', pm.collectionVariables.get('adminEmail') || '');",
+          "  pm.collectionVariables.set('basicPassword', pm.collectionVariables.get('adminPassword') || '');",
+          "}",
+          "const m = pm.request.method;",
+          "const rawUrl = (pm.request.url && pm.request.url.raw) ? pm.request.url.raw : String(pm.request.url || '');",
+          "const isRegister = rawUrl.indexOf('/api/auth/register/') >= 0;",
+          "if (!isRegister && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(m)) {",
+          "  const t = pm.collectionVariables.get('csrfToken');",
+          "  if (t) { pm.request.headers.upsert({ key: 'X-XSRF-TOKEN', value: t }); }",
+          "}"
+        ]
+      }
+    }
+  ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080" },
     { "key": "ownerId", "value": "1" },
     { "key": "petId", "value": "1" },
     { "key": "vetId", "value": "1" },
     { "key": "appointmentId", "value": "1" },
     { "key": "treatmentId", "value": "1" },
-    { "key": "appointmentDateTime", "value": "2000-01-01T10:00:00" },
-    { "key": "appointmentDateTimeUpdated", "value": "2000-01-01T11:00:00" },
+    { "key": "appointmentVisitDate", "value": "2000-01-01" },
+    { "key": "appointmentVisitDateUpdated", "value": "2000-01-02" },
     { "key": "appointmentIdWithoutTreatment", "value": "2" },
-    { "key": "scheduleFrom", "value": "1999-12-31T00:00:00" },
-    { "key": "scheduleTo", "value": "2005-12-31T23:59:59" }
+    { "key": "scheduleFrom", "value": "1999-12-31" },
+    { "key": "scheduleTo", "value": "2005-12-31" },
+    { "key": "basicUser", "value": "" },
+    { "key": "basicPassword", "value": "" },
+    { "key": "csrfToken", "value": "" },
+    { "key": "activeProfile", "value": "admin" },
+    { "key": "adminEmail", "value": "" },
+    { "key": "adminPassword", "value": "" },
+    { "key": "userEmail", "value": "" },
+    { "key": "userPassword", "value": "" },
+    { "key": "adminRegisterSecret", "value": "vetclinic-dev-admin-secret" }
   ],
   "item": [
+    {
+      "name": "Auth (лаба 4)",
+      "item": [
+        {
+          "name": "Register ADMIN (секрет в заголовке)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const body = JSON.parse(pm.request.body.raw);",
+                  "  if (body.email) pm.collectionVariables.set('adminEmail', body.email);",
+                  "  if (body.password) pm.collectionVariables.set('adminPassword', body.password);",
+                  "} catch (e) {}",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.email) pm.collectionVariables.set('adminEmail', j.email);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Admin-Register-Secret", "value": "{{adminRegisterSecret}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Админ клиники\",\n  \"email\": \"admin.clinic@example.com\",\n  \"password\": \"Admin1!x\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/auth/register/admin",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "auth", "register", "admin"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register USER",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const body = JSON.parse(pm.request.body.raw);",
+                  "  if (body.email) pm.collectionVariables.set('userEmail', body.email);",
+                  "  if (body.password) pm.collectionVariables.set('userPassword', body.password);",
+                  "} catch (e) {}",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.email) pm.collectionVariables.set('userEmail', j.email);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Клиент\",\n  \"email\": \"client.user@example.com\",\n  \"password\": \"User1!x\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/auth/register/user",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "auth", "register", "user"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Переключить коллекцию на ADMIN (basicUser=admin)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('activeProfile', 'admin');",
+                  "pm.collectionVariables.set('basicUser', pm.collectionVariables.get('adminEmail') || '');",
+                  "pm.collectionVariables.set('basicPassword', pm.collectionVariables.get('adminPassword') || '');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('activeProfile', 'admin');",
+                  "pm.collectionVariables.set('basicUser', pm.collectionVariables.get('adminEmail') || '');",
+                  "pm.collectionVariables.set('basicPassword', pm.collectionVariables.get('adminPassword') || '');",
+                  "if (pm.response.code === 200) { console.log('Коллекция теперь шлёт Basic как ADMIN:', pm.collectionVariables.get('basicUser')); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8080/api/hello",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "hello"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Переключить коллекцию на USER (basicUser=user)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('activeProfile', 'user');",
+                  "pm.collectionVariables.set('basicUser', pm.collectionVariables.get('userEmail') || '');",
+                  "pm.collectionVariables.set('basicPassword', pm.collectionVariables.get('userPassword') || '');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('activeProfile', 'user');",
+                  "pm.collectionVariables.set('basicUser', pm.collectionVariables.get('userEmail') || '');",
+                  "pm.collectionVariables.set('basicPassword', pm.collectionVariables.get('userPassword') || '');",
+                  "if (pm.response.code === 200) { console.log('Коллекция теперь шлёт Basic как USER:', pm.collectionVariables.get('basicUser')); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8080/api/hello",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "hello"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get CSRF token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const j = pm.response.json();",
+                  "  if (j && j.token) pm.collectionVariables.set('csrfToken', j.token);",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8080/api/auth/csrf",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "auth", "csrf"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Лаба 4 — проверка ролей (явный Basic)",
+      "description": "Сначала выполните Register ADMIN, Register USER и **Get CSRF token**. Здесь у каждого запроса свой логин — не зависит от Switch и activeProfile.",
+      "item": [
+        {
+          "name": "ADMIN: Get all owners (ожидается 200)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{adminEmail}}", "type": "string" },
+                { "key": "password", "value": "{{adminPassword}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/owners",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "owners"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "USER: Create pet (ожидается 201)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{userEmail}}", "type": "string" },
+                { "key": "password", "value": "{{userPassword}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"BarsikDemo\",\n  \"species\": \"Cat\",\n  \"breed\": \"\",\n  \"ownerId\": 1\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/pets",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "pets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "USER: Get all owners (ожидается 403)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{userEmail}}", "type": "string" },
+                { "key": "password", "value": "{{userPassword}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/owners",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "owners"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
     {
       "name": "Lists (все записи из БД)",
       "item": [
@@ -26,7 +337,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/owners",
+              "raw": "http://localhost:8080/api/owners",
               "path": ["api", "owners"]
             }
           },
@@ -37,7 +348,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/pets",
+              "raw": "http://localhost:8080/api/pets",
               "path": ["api", "pets"]
             }
           },
@@ -48,7 +359,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/vets",
+              "raw": "http://localhost:8080/api/vets",
               "path": ["api", "vets"]
             }
           },
@@ -59,7 +370,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/appointments",
+              "raw": "http://localhost:8080/api/appointments",
               "path": ["api", "appointments"]
             }
           },
@@ -70,7 +381,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/treatments",
+              "raw": "http://localhost:8080/api/treatments",
               "path": ["api", "treatments"]
             }
           },
@@ -89,7 +400,7 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/owners",
+              "raw": "http://localhost:8080/api/owners",
               "path": ["api", "owners"]
             },
             "body": {
@@ -118,7 +429,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/owners/{{ownerId}}",
+              "raw": "http://localhost:8080/api/owners/{{ownerId}}",
               "path": ["api", "owners", "{{ownerId}}"]
             }
           },
@@ -129,7 +440,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/owners/{{ownerId}}/pets",
+              "raw": "http://localhost:8080/api/owners/{{ownerId}}/pets",
               "path": ["api", "owners", "{{ownerId}}", "pets"]
             }
           },
@@ -143,7 +454,7 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/owners/{{ownerId}}",
+              "raw": "http://localhost:8080/api/owners/{{ownerId}}",
               "path": ["api", "owners", "{{ownerId}}"]
             },
             "body": {
@@ -158,7 +469,7 @@
           "request": {
             "method": "DELETE",
             "url": {
-              "raw": "{{baseUrl}}/api/owners/{{ownerId}}",
+              "raw": "http://localhost:8080/api/owners/{{ownerId}}",
               "path": ["api", "owners", "{{ownerId}}"]
             }
           },
@@ -177,7 +488,7 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/pets",
+              "raw": "http://localhost:8080/api/pets",
               "path": ["api", "pets"]
             },
             "body": {
@@ -206,7 +517,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/pets/{{petId}}",
+              "raw": "http://localhost:8080/api/pets/{{petId}}",
               "path": ["api", "pets", "{{petId}}"]
             }
           },
@@ -217,7 +528,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/pets/{{petId}}/appointments",
+              "raw": "http://localhost:8080/api/pets/{{petId}}/appointments",
               "path": ["api", "pets", "{{petId}}", "appointments"]
             }
           },
@@ -231,7 +542,7 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/pets/{{petId}}",
+              "raw": "http://localhost:8080/api/pets/{{petId}}",
               "path": ["api", "pets", "{{petId}}"]
             },
             "body": {
@@ -246,7 +557,7 @@
           "request": {
             "method": "DELETE",
             "url": {
-              "raw": "{{baseUrl}}/api/pets/{{petId}}",
+              "raw": "http://localhost:8080/api/pets/{{petId}}",
               "path": ["api", "pets", "{{petId}}"]
             }
           },
@@ -265,7 +576,7 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/vets",
+              "raw": "http://localhost:8080/api/vets",
               "path": ["api", "vets"]
             },
             "body": {
@@ -294,7 +605,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/vets/{{vetId}}",
+              "raw": "http://localhost:8080/api/vets/{{vetId}}",
               "path": ["api", "vets", "{{vetId}}"]
             }
           },
@@ -305,7 +616,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/vets/{{vetId}}/appointments",
+              "raw": "http://localhost:8080/api/vets/{{vetId}}/appointments",
               "path": ["api", "vets", "{{vetId}}", "appointments"]
             }
           },
@@ -319,7 +630,7 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/vets/{{vetId}}",
+              "raw": "http://localhost:8080/api/vets/{{vetId}}",
               "path": ["api", "vets", "{{vetId}}"]
             },
             "body": {
@@ -334,7 +645,7 @@
           "request": {
             "method": "DELETE",
             "url": {
-              "raw": "{{baseUrl}}/api/vets/{{vetId}}",
+              "raw": "http://localhost:8080/api/vets/{{vetId}}",
               "path": ["api", "vets", "{{vetId}}"]
             }
           },
@@ -353,12 +664,12 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/appointments",
+              "raw": "http://localhost:8080/api/appointments",
               "path": ["api", "appointments"]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"petId\": {{petId}},\n  \"vetId\": {{vetId}},\n  \"dateTime\": \"{{appointmentDateTime}}\",\n  \"reason\": \"Checkup\"\n}"
+              "raw": "{\n  \"petId\": {{petId}},\n  \"vetId\": {{vetId}},\n  \"visitDate\": \"{{appointmentVisitDate}}\",\n  \"reason\": \"Checkup\"\n}"
             }
           },
           "response": [],
@@ -382,7 +693,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+              "raw": "http://localhost:8080/api/appointments/{{appointmentId}}",
               "path": ["api", "appointments", "{{appointmentId}}"]
             }
           },
@@ -393,7 +704,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}/treatments",
+              "raw": "http://localhost:8080/api/appointments/{{appointmentId}}/treatments",
               "path": ["api", "appointments", "{{appointmentId}}", "treatments"]
             }
           },
@@ -407,12 +718,12 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+              "raw": "http://localhost:8080/api/appointments/{{appointmentId}}",
               "path": ["api", "appointments", "{{appointmentId}}"]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"petId\": {{petId}},\n  \"vetId\": {{vetId}},\n  \"dateTime\": \"{{appointmentDateTimeUpdated}}\",\n  \"reason\": \"Rescheduled / updated\"\n}"
+              "raw": "{\n  \"petId\": {{petId}},\n  \"vetId\": {{vetId}},\n  \"visitDate\": \"{{appointmentVisitDateUpdated}}\",\n  \"reason\": \"Rescheduled / updated\"\n}"
             }
           },
           "response": []
@@ -422,7 +733,7 @@
           "request": {
             "method": "DELETE",
             "url": {
-              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+              "raw": "http://localhost:8080/api/appointments/{{appointmentId}}",
               "path": ["api", "appointments", "{{appointmentId}}"]
             }
           },
@@ -441,7 +752,7 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/treatments",
+              "raw": "http://localhost:8080/api/treatments",
               "path": ["api", "treatments"]
             },
             "body": {
@@ -470,7 +781,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/treatments/{{treatmentId}}",
+              "raw": "http://localhost:8080/api/treatments/{{treatmentId}}",
               "path": ["api", "treatments", "{{treatmentId}}"]
             }
           },
@@ -484,7 +795,7 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/treatments/{{treatmentId}}",
+              "raw": "http://localhost:8080/api/treatments/{{treatmentId}}",
               "path": ["api", "treatments", "{{treatmentId}}"]
             },
             "body": {
@@ -499,7 +810,7 @@
           "request": {
             "method": "DELETE",
             "url": {
-              "raw": "{{baseUrl}}/api/treatments/{{treatmentId}}",
+              "raw": "http://localhost:8080/api/treatments/{{treatmentId}}",
               "path": ["api", "treatments", "{{treatmentId}}"]
             }
           },
@@ -518,25 +829,26 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/operations/admit-pet-with-appointment",
+              "raw": "http://localhost:8080/api/operations/admit-pet-with-appointment",
               "path": ["api", "operations", "admit-pet-with-appointment"]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ownerId\": {{ownerId}},\n  \"petName\": \"Buddy\",\n  \"species\": \"Dog\",\n  \"breed\": \"Beagle\",\n  \"vetId\": {{vetId}},\n  \"dateTime\": \"2000-06-01T09:00:00\",\n  \"reason\": \"First visit\"\n}"
+              "raw": "{\n  \"ownerId\": 1,\n  \"petName\": \"Buddy\",\n  \"species\": \"Dog\",\n  \"breed\": \"Beagle\",\n  \"vetId\": 1,\n  \"visitDate\": \"2000-06-01\",\n  \"reason\": \"First visit\"\n}"
             }
           },
           "response": []
         },
         {
           "name": "2 Complete visit with treatment",
+          "description": "Перед запуском: при **400 Appointment not found** открой **Lists → Get all appointments**, найди визит **без** treatment с **visitDate** в прошлом или сегодня, задай **Variables → appointmentIdWithoutTreatment** = этот id (по умолчанию **2** после seed).",
           "request": {
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/operations/complete-visit-with-treatment",
+              "raw": "http://localhost:8080/api/operations/complete-visit-with-treatment",
               "path": ["api", "operations", "complete-visit-with-treatment"]
             },
             "body": {
@@ -551,7 +863,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/operations/owners/{{ownerId}}/summary",
+              "raw": "http://localhost:8080/api/operations/owners/{{ownerId}}/summary",
               "path": ["api", "operations", "owners", "{{ownerId}}", "summary"]
             }
           },
@@ -562,7 +874,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/operations/vets/{{vetId}}/schedule?from={{scheduleFrom}}&to={{scheduleTo}}",
+              "raw": "http://localhost:8080/api/operations/vets/{{vetId}}/schedule?from={{scheduleFrom}}&to={{scheduleTo}}",
               "path": ["api", "operations", "vets", "{{vetId}}", "schedule"],
               "query": [
                 { "key": "from", "value": "{{scheduleFrom}}" },
@@ -580,7 +892,7 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/operations/cancel-appointment",
+              "raw": "http://localhost:8080/api/operations/cancel-appointment",
               "path": ["api", "operations", "cancel-appointment"]
             },
             "body": {

@@ -1,6 +1,10 @@
 package RBPO.proj.dto;
 
-import java.time.LocalDateTime;
+import RBPO.proj.jackson.VisitDateDeserializer;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import java.time.LocalDate;
 
 public class AdmitPetWithAppointmentRequest {
     private Long ownerId;
@@ -8,7 +12,9 @@ public class AdmitPetWithAppointmentRequest {
     private String species;
     private String breed;
     private Long vetId;
-    private LocalDateTime dateTime;
+    @JsonAlias("dateTime")
+    @JsonDeserialize(using = VisitDateDeserializer.class)
+    private LocalDate visitDate;
     private String reason;
 
     public Long getOwnerId() {
@@ -51,12 +57,12 @@ public class AdmitPetWithAppointmentRequest {
         this.vetId = vetId;
     }
 
-    public LocalDateTime getDateTime() {
-        return dateTime;
+    public LocalDate getVisitDate() {
+        return visitDate;
     }
 
-    public void setDateTime(LocalDateTime dateTime) {
-        this.dateTime = dateTime;
+    public void setVisitDate(LocalDate visitDate) {
+        this.visitDate = visitDate;
     }
 
     public String getReason() {

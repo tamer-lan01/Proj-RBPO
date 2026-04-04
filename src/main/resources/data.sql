@@ -12,9 +12,9 @@ INSERT INTO pets (name, species, breed, owner_id)
 VALUES ('Doggie', 'Dog', 'Labrador', 1),
        ('Kitty', 'Cat', 'Siamese', 2);
 
-INSERT INTO appointments (pet_id, vet_id, date_time, reason, completed)
-VALUES (1, 1, '2000-01-01 10:00:00', 'Checkup', TRUE),
-       (2, 2, '2000-01-02 14:00:00', 'Follow-up', FALSE);
+INSERT INTO appointments (pet_id, vet_id, visit_date, reason, completed)
+VALUES (1, 1, '2000-01-01', 'Checkup', TRUE),
+       (2, 2, '2000-01-02', 'Follow-up', FALSE);
 
 INSERT INTO treatments (appointment_id, procedures_and_medications, notes)
 VALUES (1, 'Vitamin injection', 'First visit treatment');

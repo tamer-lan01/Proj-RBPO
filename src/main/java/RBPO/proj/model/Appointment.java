@@ -1,5 +1,8 @@
 package RBPO.proj.model;
 
+import RBPO.proj.jackson.VisitDateDeserializer;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -7,7 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "appointments")
@@ -22,8 +25,11 @@ public class Appointment {
     @Column(name = "vet_id", nullable = false)
     private Long vetId;
 
-    @Column(name = "date_time", nullable = false)
-    private LocalDateTime dateTime;
+    /** День приёма (без времени): один слот на врача в календарный день. */
+    @Column(name = "visit_date", nullable = false)
+    @JsonAlias("dateTime")
+    @JsonDeserialize(using = VisitDateDeserializer.class)
+    private LocalDate visitDate;
 
     private String reason;
 
@@ -33,11 +39,11 @@ public class Appointment {
     public Appointment() {
     }
 
-    public Appointment(Long id, Long petId, Long vetId, LocalDateTime dateTime, String reason) {
+    public Appointment(Long id, Long petId, Long vetId, LocalDate visitDate, String reason) {
         this.id = id;
         this.petId = petId;
         this.vetId = vetId;
-        this.dateTime = dateTime;
+        this.visitDate = visitDate;
         this.reason = reason;
         this.completed = false;
     }
@@ -66,12 +72,12 @@ public class Appointment {
         this.vetId = vetId;
     }
 
-    public LocalDateTime getDateTime() {
-        return dateTime;
+    public LocalDate getVisitDate() {
+        return visitDate;
     }
 
-    public void setDateTime(LocalDateTime dateTime) {
-        this.dateTime = dateTime;
+    public void setVisitDate(LocalDate visitDate) {
+        this.visitDate = visitDate;
     }
 
     public String getReason() {

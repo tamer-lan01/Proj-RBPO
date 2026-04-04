@@ -1,25 +1,25 @@
 package RBPO.proj.dto;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class VetScheduleRow {
     private Long appointmentId;
-    private LocalDateTime dateTime;
+    private LocalDate visitDate;
     private Long petId;
     private String petName;
     private String reason;
     private boolean completed;
 
-    public VetScheduleRow() {
-    }
-
-    public VetScheduleRow(Long appointmentId, LocalDateTime dateTime, Long petId, String petName, String reason, boolean completed) {
+    public VetScheduleRow(Long appointmentId, LocalDate visitDate, Long petId, String petName, String reason, boolean completed) {
         this.appointmentId = appointmentId;
-        this.dateTime = dateTime;
+        this.visitDate = visitDate;
         this.petId = petId;
         this.petName = petName;
         this.reason = reason;
         this.completed = completed;
+    }
+
+    public VetScheduleRow() {
     }
 
     public Long getAppointmentId() {
@@ -30,12 +30,12 @@ public class VetScheduleRow {
         this.appointmentId = appointmentId;
     }
 
-    public LocalDateTime getDateTime() {
-        return dateTime;
+    public LocalDate getVisitDate() {
+        return visitDate;
     }
 
-    public void setDateTime(LocalDateTime dateTime) {
-        this.dateTime = dateTime;
+    public void setVisitDate(LocalDate visitDate) {
+        this.visitDate = visitDate;
     }
 
     public Long getPetId() {

@@ -2,6 +2,7 @@ package RBPO.proj.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import RBPO.proj.model.Appointment;
 import RBPO.proj.model.Treatment;
@@ -23,6 +24,7 @@ public class AppointmentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> create(@RequestBody Appointment appointment) {
         try {
             Appointment created = appointmentService.create(appointment);
@@ -33,6 +35,7 @@ public class AppointmentController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Appointment> getById(@PathVariable Long id) {
         return appointmentService.getById(id)
                 .map(ResponseEntity::ok)
@@ -41,6 +44,7 @@ public class AppointmentController {
 
     /** GET: все назначения по данному визиту */
     @GetMapping("/{appointmentId}/treatments")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Treatment>> getTreatmentsForAppointment(@PathVariable Long appointmentId) {
         if (!appointmentService.exists(appointmentId)) {
             return ResponseEntity.notFound().build();
@@ -49,6 +53,7 @@ public class AppointmentController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public List<Appointment> getAll(@RequestParam(required = false) Long petId,
                                    @RequestParam(required = false) Long vetId) {
         if (petId != null) return appointmentService.getByPetId(petId);
@@ -57,6 +62,7 @@ public class AppointmentController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Appointment appointment) {
         try {
             return appointmentService.update(id, appointment)
@@ -68,6 +74,7 @@ public class AppointmentController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (!appointmentService.delete(id)) {
             return ResponseEntity.notFound().build();

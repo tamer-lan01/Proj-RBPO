@@ -1,3 +1,11 @@
+CREATE TABLE IF NOT EXISTS app_users (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(32) NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS owners (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -24,10 +32,10 @@ CREATE TABLE IF NOT EXISTS appointments (
     id BIGSERIAL PRIMARY KEY,
     pet_id BIGINT NOT NULL REFERENCES pets (id) ON DELETE CASCADE,
     vet_id BIGINT NOT NULL REFERENCES vets (id) ON DELETE RESTRICT,
-    date_time TIMESTAMP NOT NULL,
+    visit_date DATE NOT NULL,
     reason VARCHAR(1024),
     completed BOOLEAN NOT NULL DEFAULT FALSE,
-    CONSTRAINT uq_appointments_vet_slot UNIQUE (vet_id, date_time)
+    CONSTRAINT uq_appointments_vet_day UNIQUE (vet_id, visit_date)
 );
 
 CREATE TABLE IF NOT EXISTS treatments (

@@ -7,7 +7,7 @@ import RBPO.proj.repository.TreatmentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,10 +31,10 @@ public class TreatmentService {
         Appointment appointment = appointmentRepository.findById(treatment.getAppointmentId())
                 .orElseThrow(() -> new IllegalArgumentException("Appointment with id " + treatment.getAppointmentId() + " not found"));
 
-        LocalDateTime now = LocalDateTime.now();
-        boolean timeOk = appointment.getDateTime() == null || !appointment.getDateTime().isAfter(now);
-        if (!appointment.isCompleted() && !timeOk) {
-            throw new IllegalArgumentException("Treatment can be created only after the appointment is completed");
+        LocalDate today = LocalDate.now();
+        boolean dayOk = appointment.getVisitDate() == null || !appointment.getVisitDate().isAfter(today);
+        if (!appointment.isCompleted() && !dayOk) {
+            throw new IllegalArgumentException("Treatment can be created only on or after the appointment day");
         }
 
         if (treatmentRepository.existsByAppointmentId(treatment.getAppointmentId())) {

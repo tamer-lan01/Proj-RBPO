@@ -1,6 +1,7 @@
 package RBPO.proj.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import RBPO.proj.model.Appointment;
 import RBPO.proj.model.Vet;
@@ -22,12 +23,14 @@ public class VetController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Vet> create(@RequestBody Vet vet) {
         Vet created = vetService.create(vet);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Vet> getById(@PathVariable Long id) {
         return vetService.getById(id)
                 .map(ResponseEntity::ok)
@@ -36,6 +39,7 @@ public class VetController {
 
     /** GET: все визиты у данного врача */
     @GetMapping("/{vetId}/appointments")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Appointment>> getAppointmentsForVet(@PathVariable Long vetId) {
         if (!vetService.exists(vetId)) {
             return ResponseEntity.notFound().build();
@@ -44,11 +48,13 @@ public class VetController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public List<Vet> getAll() {
         return vetService.getAll();
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Vet> update(@PathVariable Long id, @RequestBody Vet vet) {
         return vetService.update(id, vet)
                 .map(ResponseEntity::ok)
@@ -56,6 +62,7 @@ public class VetController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (!vetService.delete(id)) {
             return ResponseEntity.notFound().build();
